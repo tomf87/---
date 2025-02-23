@@ -92,12 +92,19 @@ class RestaurantManager {
 
     async loadRestaurants() {
         try {
-            const response = await fetch('./restaurants.json');
+            const response = await fetch('/flavour-crusaders/restaurants.json');
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                // Fallback to local path if GitHub Pages path fails
+                const localResponse = await fetch('./restaurants.json');
+                if (!localResponse.ok) {
+                    throw new Error(`HTTP error! status: ${localResponse.status}`);
+                }
+                const data = await localResponse.json();
+                this.restaurants = data.restaurants;
+            } else {
+                const data = await response.json();
+                this.restaurants = data.restaurants;
             }
-            const data = await response.json();
-            this.restaurants = data.restaurants;
             this.updateDisplay();
         } catch (error) {
             console.error("Error loading restaurants:", error);
