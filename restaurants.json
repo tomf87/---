@@ -1,0 +1,76 @@
+{
+    "restaurants": [
+        {
+            "name": "The office",
+            "lat": 53.797506357670294,
+            "lon": -1.554179475228402,
+            "rating": 4.5,
+            "review": "Great office!",
+            "visited": true
+        },
+        {
+            "name": "Senbon Sakura Cafe & Japanese Kitchen",
+            "lat": 53.80111412096824,
+            "lon": -1.5528727798052633,
+            "rating": 7.6,
+            "review": "Great Japanese dishes!",
+            "visited": true
+        },
+        {
+            "name": "Poco Sicilian Street Food",
+            "lat": 53.798449197122316,
+            "lon": -1.543390631109221,
+            "rating": 5.25,
+            "review": "Great office!",
+            "visited": true
+        },
+        {
+            "name": "Tesco Express",
+            "lat": 53.79786041734826,
+            "lon": -1.5507467957339993,
+            "rating": null,
+            "review": null,
+            "visited": false
+        },
+        {
+            "name": "Olive and Thai",
+            "lat": 53.79848343499993,
+            "lon": -1.5427846202364475,
+            "rating": 8,
+            "review": "Great Thai dishes!",
+            "visited": true
+        },
+        {
+            "name": "White Cloth Hall",
+            "lat": 53.795707706209704,
+            "lon": -1.5397975643085409,
+            "rating": 7,
+            "review": "Great salad!",
+            "visited": true
+        },
+        {
+            "name": "Honi Poke",
+            "lat": 53.797027893129176,
+            "lon": -1.5450717483030552,
+            "rating": 6.4,
+            "review": "Expensive, caused bloating",
+            "visited": true
+        },
+        {
+            "name": "things in bread",
+            "lat": 53.795928331288835,
+            "lon": -1.543838893254517,
+            "rating": 7,
+            "review": "Great coffee!",
+            "visited": true
+        },
+        {
+            "name": "Sesame Salad Bar",
+            "lat": 53.79801064110632,
+            "lon": -1.5511568504887525,
+            "rating": null,
+            "review": null,
+            "visited": false
+        }
+    ]
+} 

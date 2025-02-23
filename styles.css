@@ -1,0 +1,112 @@
+body { 
+    font-family: Verdana, sans-serif; 
+    margin: 0; 
+    display: flex; 
+}
+
+#restaurantMap { 
+    width: 75%; 
+    height: 100vh; 
+}
+
+#sidebar { 
+    width: 25%; 
+    padding: 10px; 
+    background: #f4f4f4; 
+    overflow-y: auto; 
+}
+
+.restaurant { 
+    padding: 5px; 
+    border-bottom: 1px solid #ddd; 
+    cursor: pointer; 
+}
+
+.restaurant:hover { 
+    background: #ddd; 
+}
+
+/* Base pennant styles */
+.pennant-container {
+    position: relative;
+    width: 40px;
+    height: 50px;
+}
+
+/* Mount styles */
+.pennant-mount {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 40px;
+    height: 8px;
+    background-color: transparent;
+    background-position: -4px 0;
+    background-size: 12px 100%;
+    border-left: 4px solid #3388ff;
+    background-image: repeating-linear-gradient(to right,
+        #3388ff 0,
+        #3388ff 6px,
+        transparent 6px,
+        transparent 12px
+    );
+}
+
+.pennant-mount-unvisited {
+    border-color: #999999;
+    background-image: repeating-linear-gradient(to right,
+        #999999 0,
+        #999999 6px,
+        transparent 6px,
+        transparent 12px
+    );
+}
+
+/* Flag styles */
+.pennant-flag {
+    position: absolute;
+    top: 4px;
+    left: 0;
+    width: 42px;
+    height: 42px;
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.2);
+    clip-path: polygon(0 0, 100% 0, 100% 80%, 50% 100%, 0 80%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #000;
+    font-size: 16px;
+    text-shadow: 
+        -1px -1px 0 white,
+        1px -1px 0 white,
+        -1px 1px 0 white,
+        1px 1px 0 white;
+    background: linear-gradient(45deg, 
+        #3388ff 0%, #3388ff 45%, 
+        white 45%, white 55%, 
+        #3388ff 55%, #3388ff 100%
+    );
+}
+
+.pennant-flag-unvisited {
+    background: linear-gradient(45deg, 
+        #999999 0%, #999999 45%, 
+        white 45%, white 55%, 
+        #999999 55%, #999999 100%
+    );
+}
+
+#restaurantList h3 {
+    margin: 15px 0 5px 0;
+    padding-top: 10px;
+    border-top: 2px solid #ddd;
+    color: #333;
+    font-size: 1em;
+}
+
+#restaurantList h3:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+} 
