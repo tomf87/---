@@ -1,31 +1,306 @@
-body { 
-    font-family: Verdana, sans-serif; 
-    margin: 0; 
-    display: flex; 
+/* ==================== RESET & BASE STYLES ==================== */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-#restaurantMap { 
-    width: 75%; 
-    height: 100vh; 
+body {
+    padding-top: 80px; /* For the fixed header */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    position: relative;
 }
 
-#sidebar { 
-    width: 25%; 
-    padding: 10px; 
-    background: #f4f4f4; 
-    overflow-y: auto; 
+/* ==================== LAYOUT COMPONENTS ==================== */
+.content-wrapper {
+    display: flex;
+    flex: 1;
+    position: relative;
+    background-color: #fff;
+    padding-bottom: 200px; /* Match footer height */
 }
 
-.restaurant { 
-    padding: 5px; 
-    border-bottom: 1px solid #ddd; 
-    cursor: pointer; 
+#restaurantMap {
+    flex: 1;
+    margin: 0;
+    padding: 0;
+    display: block;
+    z-index: 1;
 }
 
-.restaurant:hover { 
-    background: #ddd; 
+#sidebar {
+    width: 320px;
+    padding: 16px;
+    background: linear-gradient(to bottom, #f8f9fa, #f1f3f5);
+    overflow-y: auto;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    box-shadow: inset -4px 0 8px -4px rgba(0, 0, 0, 0.1);
+    border-right: 1px solid #e0e0e0;
 }
 
+/* ==================== BANNER STYLES ==================== */
+#banner {
+    width: 100%;
+    background-color: #fdf6e9;
+    padding: 10px 0;
+    text-align: left;
+    border-bottom: 1px solid #e0d8c8;
+    position: fixed;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: 20px;
+}
+
+.logo {
+    margin-right: 10px;
+}
+
+.logo img {
+    height: 60px;
+    width: auto;
+}
+
+.banner-text {
+    font-size: 2.5rem;
+    color: #8ca3d8;
+    font-family: 'Georgia', serif;
+    font-style: italic;
+}
+
+/* ==================== RESTAURANT LIST STYLES ==================== */
+#restaurantList {
+    margin-top: 8px;
+    background-color: white;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.restaurant {
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 4px;
+    background-color: #f9f9f9;
+    border-left: 4px solid transparent;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.restaurant:hover {
+    background: #f0f4ff;
+    border-left: 4px solid #8ca3d8;
+    transform: translateX(2px);
+}
+
+.restaurant-name {
+    font-weight: 500;
+    flex: 1;
+}
+
+.restaurant-rating {
+    background: #fffbeb;
+    color: #d97706;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 12px;
+    border: 1px solid #fef3c7;
+    font-size: 0.85em;
+    display: flex;
+    align-items: center;
+    min-width: 42px;
+    justify-content: center;
+}
+
+.rating-star {
+    font-size: 0.9em;
+    margin-left: 3px;
+}
+
+.restaurant-unrated {
+    background: #f3f4f6;
+    color: #9ca3af;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    font-size: 0.8em;
+}
+
+.no-results {
+    padding: 30px 0;
+    text-align: center;
+    color: #6c757d;
+}
+
+.error-message {
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    color: #ef4444;
+    padding: 12px;
+    border-radius: 6px;
+    margin: 10px 0;
+    text-align: center;
+}
+
+#restaurantList h3 {
+    margin: 16px 0 12px 0;
+    padding-top: 14px;
+    border-top: 1px solid #eaeaea;
+    color: #495057;
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+#restaurantList h3:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+/* ==================== CONTROL STYLES ==================== */
+.sidebar-header {
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.sidebar-header h2 {
+    font-size: 1.4em;
+    margin: 0 0 16px 0;
+    color: #495057;
+    font-weight: 600;
+}
+
+.center-button {
+    display: block;
+    width: 100%;
+    margin: 0 0 16px 0;
+    padding: 10px 12px;
+    background-color: #8ca3d8;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.center-button:hover {
+    background-color: #6b85c8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.center-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.controls-container {
+    background-color: white;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 16px;
+}
+
+.control-label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #495057;
+    font-size: 0.9em;
+}
+
+#search, #ratingFilter {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-size: 0.95em;
+}
+
+#search:focus, #ratingFilter:focus {
+    outline: none;
+    border-color: #8ca3d8;
+    box-shadow: 0 0 0 3px rgba(140, 163, 216, 0.25);
+}
+
+#ratingFilter {
+    margin-bottom: 0;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23495057' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    padding-right: 30px;
+}
+
+/* ==================== RATING LEGEND STYLES ==================== */
+.rating-legend {
+    margin-top: auto;
+    padding: 16px;
+    border-radius: 8px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.rating-legend h3 {
+    font-size: 1.1em;
+    margin: 0 0 12px 0;
+    color: #495057;
+    font-weight: 600;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.legend-item {
+    display: flex;
+    align-items: baseline;
+    font-size: 0.85em;
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+.legend-rating {
+    font-weight: bold;
+    min-width: 24px;
+    margin-right: 6px;
+    color: #495057;
+}
+
+.legend-emoji {
+    margin-right: 8px;
+    font-size: 1.2em;
+}
+
+.legend-description {
+    color: #6c757d;
+}
+
+/* ==================== PENNANT MARKER STYLES ==================== */
 /* Base pennant styles */
 .pennant-container {
     position: relative;
@@ -44,7 +319,8 @@ body {
     background-position: -4px 0;
     background-size: 12px 100%;
     border-left: 4px solid #3388ff;
-    background-image: repeating-linear-gradient(to right,
+    background-image: repeating-linear-gradient(
+        to right,
         #3388ff 0,
         #3388ff 6px,
         transparent 6px,
@@ -54,7 +330,8 @@ body {
 
 .pennant-mount-unvisited {
     border-color: #999999;
-    background-image: repeating-linear-gradient(to right,
+    background-image: repeating-linear-gradient(
+        to right,
         #999999 0,
         #999999 6px,
         transparent 6px,
@@ -82,7 +359,8 @@ body {
         1px -1px 0 white,
         -1px 1px 0 white,
         1px 1px 0 white;
-    background: linear-gradient(45deg, 
+    background: linear-gradient(
+        45deg, 
         #3388ff 0%, #3388ff 45%, 
         white 45%, white 55%, 
         #3388ff 55%, #3388ff 100%
@@ -90,23 +368,32 @@ body {
 }
 
 .pennant-flag-unvisited {
-    background: linear-gradient(45deg, 
+    background: linear-gradient(
+        45deg, 
         #999999 0%, #999999 45%, 
         white 45%, white 55%, 
         #999999 55%, #999999 100%
     );
 }
 
-#restaurantList h3 {
-    margin: 15px 0 5px 0;
-    padding-top: 10px;
-    border-top: 2px solid #ddd;
-    color: #333;
-    font-size: 1em;
+/* ==================== FOOTER STYLES ==================== */
+#site-footer {
+    position: fixed;
+    bottom: 0;
+    z-index: 100;
+    width: 100%;
+    height: 200px;
+    margin: 0;
+    padding: 0;
 }
 
-#restaurantList h3:first-child {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: none;
+.footer-content {
+    width: 100%;
+    height: 200px;
+    background-image: url('images/footer-banner.svg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    margin: 0;
+    padding: 0;
 } 

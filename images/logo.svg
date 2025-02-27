@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shield outline -->
+  <path d="M60 10 L110 30 L110 70 C110 90 90 110 60 115 C30 110 10 90 10 70 L10 30 Z" fill="#fdf6e9" stroke="#E25822" stroke-width="4"/>
+  
+  <!-- Fork (Trident) -->
+  <path d="M60 30 L60 90" stroke="#E25822" stroke-width="4" stroke-linecap="round"/>
+  <path d="M50 40 L50 65" stroke="#E25822" stroke-width="4" stroke-linecap="round"/>
+  <path d="M70 40 L70 65" stroke="#E25822" stroke-width="4" stroke-linecap="round"/>
+  <path d="M45 35 L75 35" stroke="#E25822" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Wheat/grain symbol -->
+  <path d="M60 55 L45 40 C55 42 65 42 75 40 L60 55 Z" fill="#8ca3d8" stroke="#8ca3d8" stroke-width="2"/>
+  <path d="M60 70 L35 50 C50 55 70 55 85 50 L60 70 Z" fill="#8ca3d8" stroke="#8ca3d8" stroke-width="2"/>
+  <path d="M60 85 L25 60 C45 70 75 70 95 60 L60 85 Z" fill="#8ca3d8" stroke="#8ca3d8" stroke-width="2"/>
+</svg> 
