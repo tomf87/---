@@ -76,18 +76,17 @@ class RestaurantMap {
 
     /**
      * Helper function to adjust map size and update marker view
-     * We use setTimeout to give the browser a moment to finish resizing
+     * We use requestAnimationFrame for smoother rendering
      */
     adjustMapSize() {
-        setTimeout(() => {
+        // Use requestAnimationFrame for more efficient rendering
+        requestAnimationFrame(() => {
             // Safety check: make sure the map exists
             if (!this.map) return;
             
             // Tell the map to recalculate its size
             this.map.invalidateSize();
-            
-            // No longer automatically fit bounds on every resize - this allows user to zoom/scroll freely
-        }, 100); // Wait 100 milliseconds
+        });
     }
 
     /**
@@ -128,6 +127,8 @@ class RestaurantMap {
      * Used when filtering restaurants or updating the display
      */
     clearMarkers() {
+        if (this.markers.length === 0) return; // Don't do anything if there are no markers
+        
         // For each marker in our list, remove it from the map
         this.markers.forEach(marker => this.map.removeLayer(marker));
         // Then clear the list
@@ -141,14 +142,27 @@ class RestaurantMap {
      * This makes a nice-looking flag marker with the restaurant's rating
      */
     createPennantIcon(rating, visited) {
-        // Create the HTML for our custom marker
-        // Note how we use different styles for visited vs unvisited restaurants
-        const pennantHtml = `
-            <div class="pennant-container">
-                <div class="pennant-mount${visited ? '' : ' pennant-mount-unvisited'}"></div>
-                <div class="pennant-flag${visited ? '' : ' pennant-flag-unvisited'}">${rating || '?'}</div>
-            </div>
-        `;
+        // Clone the pennant template from HTML
+        const template = document.getElementById('pennantTemplate');
+        const pennantContainer = template.content.cloneNode(true);
+        
+        // Get references to the elements we need to modify
+        const mount = pennantContainer.querySelector('.pennant-mount');
+        const flag = pennantContainer.querySelector('.pennant-flag');
+        
+        // Add appropriate classes based on visited status
+        if (!visited) {
+            mount.classList.add('pennant-mount-unvisited');
+            flag.classList.add('pennant-flag-unvisited');
+        }
+        
+        // Set the rating
+        flag.textContent = rating || '?';
+        
+        // Convert the HTML to a string
+        const tempDiv = document.createElement('div');
+        tempDiv.appendChild(pennantContainer);
+        const pennantHtml = tempDiv.innerHTML;
 
         // Create a Leaflet divIcon (a marker made with HTML/CSS instead of an image)
         return L.divIcon({
@@ -165,12 +179,69 @@ class RestaurantMap {
      * Creates a marker with the restaurant's info and returns it
      */
     addMarker(restaurant) {
+        // Create HTML content for the popup with proper structure and styling
+        const popupContent = document.createElement('div');
+        popupContent.className = 'restaurant-popup';
+        
+        // Create header section
+        const header = document.createElement('div');
+        header.className = 'popup-header';
+        
+        // Add restaurant name
+        const name = document.createElement('h3');
+        name.className = 'popup-name';
+        name.textContent = restaurant.name;
+        header.appendChild(name);
+        
+        // Add address if available
+        if (restaurant.address) {
+            const address = document.createElement('div');
+            address.className = 'popup-address';
+            address.innerHTML = `<span class="popup-address-icon">📍</span> ${restaurant.address}`;
+            header.appendChild(address);
+        }
+        
+        // If the restaurant has been visited, add rating and review
+        if (restaurant.visited && restaurant.rating) {
+            // Add rating badge
+            const rating = document.createElement('div');
+            rating.className = 'popup-rating';
+            rating.innerHTML = `${restaurant.rating} <span class="popup-rating-star">⭐</span>`;
+            header.appendChild(rating);
+            
+            // Add header to content
+            popupContent.appendChild(header);
+            
+            // Add review section if there is one
+            if (restaurant.review && restaurant.review.trim()) {
+                const review = document.createElement('div');
+                review.className = 'popup-review';
+                review.textContent = restaurant.review;
+                popupContent.appendChild(review);
+            }
+        } else {
+            // Add header to content
+            popupContent.appendChild(header);
+            
+            // Show unvisited message
+            const unvisited = document.createElement('div');
+            unvisited.className = 'popup-unvisited';
+            unvisited.textContent = 'Not yet visited';
+            popupContent.appendChild(unvisited);
+        }
+        
+        // Set popup options for maximum width - make it wider
+        const popupOptions = {
+            maxWidth: 400,
+            className: 'restaurant-popup-container'
+        };
+        
         // Create a marker at the restaurant's location
         const marker = L.marker([restaurant.lat, restaurant.lon], {
             icon: this.createPennantIcon(restaurant.rating, restaurant.visited)
         })
         .addTo(this.map)  // Add it to the map
-        .bindPopup(`<b>${restaurant.name}</b><br>${restaurant.visited ? `Rating: ${restaurant.rating}<br>${restaurant.review}` : 'Not yet visited'}`);  // Add popup info
+        .bindPopup(popupContent, popupOptions);  // Add popup with our custom content
         
         // Remember this marker for later
         this.markers.push(marker);
@@ -193,9 +264,13 @@ class RestaurantMap {
      * This allows the map to center once when first loaded, but then lets the user freely navigate
      */
     centerMapIfNeeded(bounds) {
+        // Only center if we have markers and this is the initial load
         if (this.initialLoad && this.markers.length > 0) {
-            this.fitBounds(bounds);
-            this.initialLoad = false;
+            // Use requestAnimationFrame for smoother rendering
+            requestAnimationFrame(() => {
+                this.fitBounds(bounds);
+                this.initialLoad = false;
+            });
         }
     }
 }
@@ -234,8 +309,11 @@ class RestaurantManager {
                     if (response.ok) {
                         const data = await response.json();  // Convert JSON response to JavaScript object
                         this.restaurants = data.restaurants; // Store the restaurant list
-                        this.applyFilters();                 // Apply any filters that might be active
-                        return;                              // Success! We can exit
+                        
+                        // Initial load - set all restaurants to be displayed
+                        this.filteredRestaurants = this.restaurants;
+                        this.updateDisplay();  // Force display update immediately
+                        return;                // Success! We can exit
                     }
                 } catch (err) {
                     // If this path fails, continue to the next one
@@ -286,9 +364,48 @@ class RestaurantManager {
         // Sort visited restaurants by rating (highest first)
         visited.sort((a, b) => b.rating - a.rating);
 
-        // Add sections to the list for each category
-        this.addRestaurantSection('Rated Restaurants', visited, bounds);
-        this.addRestaurantSection('To Visit', unvisited, bounds);
+        // Use document fragment for more efficient DOM operations
+        const fragment = document.createDocumentFragment();
+        
+        // Add sections to the fragment for each category
+        if (visited.length > 0) {
+            const heading = document.createElement('h3');
+            heading.textContent = 'Rated Restaurants';
+            fragment.appendChild(heading);
+            
+            // Add all visited restaurants to the list
+            visited.forEach(restaurant => {
+                // Add a marker to the map
+                const marker = this.map.addMarker(restaurant);
+                
+                // Extend our bounds to include this restaurant
+                bounds.extend([restaurant.lat, restaurant.lon]);
+                
+                // Add restaurant to the fragment
+                fragment.appendChild(this.createRestaurantElement(restaurant, marker));
+            });
+        }
+        
+        if (unvisited.length > 0) {
+            const heading = document.createElement('h3');
+            heading.textContent = 'To Visit';
+            fragment.appendChild(heading);
+            
+            // Add all unvisited restaurants to the list
+            unvisited.forEach(restaurant => {
+                // Add a marker to the map
+                const marker = this.map.addMarker(restaurant);
+                
+                // Extend our bounds to include this restaurant
+                bounds.extend([restaurant.lat, restaurant.lon]);
+                
+                // Add restaurant to the fragment
+                fragment.appendChild(this.createRestaurantElement(restaurant, marker));
+            });
+        }
+        
+        // Append the fragment to the list (a single DOM operation)
+        listElement.appendChild(fragment);
 
         // Only center the map on the first load, not every time we filter
         if (this.map.markers.length > 0) {
@@ -297,61 +414,30 @@ class RestaurantManager {
     }
 
     /**
-     * Add a section of restaurants to the sidebar list
-     * This handles either visited or unvisited restaurants
+     * Create a restaurant element for the sidebar list
+     * Returns a DOM element for the restaurant
      */
-    addRestaurantSection(title, restaurants, bounds) {
-        // If there are no restaurants in this section, don't add anything
-        if (restaurants.length === 0) return;
+    createRestaurantElement(restaurant, marker) {
+        // Clone the restaurant template from HTML
+        const template = document.getElementById('restaurantItemTemplate');
+        const element = template.content.cloneNode(true);
         
-        // Get the list element and add a heading for this section
-        const listElement = document.getElementById('restaurantList');
-        const heading = document.createElement('h3');
-        heading.textContent = title;
-        listElement.appendChild(heading);
-
-        // For each restaurant, add it to the list and map
-        restaurants.forEach(restaurant => {
-            // Add a marker to the map
-            const marker = this.map.addMarker(restaurant);
-            
-            // Extend our bounds to include this restaurant
-            bounds.extend([restaurant.lat, restaurant.lon]);
-            
-            // Add this restaurant to the sidebar list
-            this.addRestaurantToList(restaurant, marker);
-        });
-    }
-
-    /**
-     * Add a single restaurant to the sidebar list
-     * Creates a clickable element that highlights the restaurant on the map
-     */
-    addRestaurantToList(restaurant, marker) {
-        // Create a new div for this restaurant
-        const div = document.createElement('div');
-        div.classList.add('restaurant');
+        // Get references to the elements we need to modify
+        const div = element.querySelector('.restaurant');
+        const nameElement = element.querySelector('.restaurant-name');
+        const ratingElement = element.querySelector('.restaurant-rating');
         
-        // Create a name element with proper styling
-        const nameElement = document.createElement('span');
-        nameElement.className = 'restaurant-name';
+        // Set the name
         nameElement.textContent = restaurant.name;
         
-        // Create a rating element if the restaurant has been rated
-        let ratingElement = null;
+        // Set the rating or unrated status
         if (restaurant.rating) {
-            ratingElement = document.createElement('span');
-            ratingElement.className = 'restaurant-rating';
             ratingElement.innerHTML = `${restaurant.rating} <span class="rating-star">⭐</span>`;
         } else {
-            ratingElement = document.createElement('span');
-            ratingElement.className = 'restaurant-unrated';
             ratingElement.textContent = 'Unrated';
+            ratingElement.classList.remove('restaurant-rating');
+            ratingElement.classList.add('restaurant-unrated');
         }
-        
-        // Add elements to the restaurant div
-        div.appendChild(nameElement);
-        div.appendChild(ratingElement);
         
         // Make it clickable - when clicked, center the map on this restaurant
         div.onclick = () => {
@@ -359,8 +445,7 @@ class RestaurantManager {
             marker.openPopup();  // Show the popup with restaurant details
         };
         
-        // Add this element to the list
-        document.getElementById('restaurantList').appendChild(div);
+        return div;
     }
 
     /**
@@ -368,21 +453,19 @@ class RestaurantManager {
      * This is called whenever the user changes the search text or rating filter
      */
     applyFilters() {
-        // Get the current search text and rating filter values
+        // Get the current rating filter value
         // The ?. is called "optional chaining" - it prevents errors if the element doesn't exist
-        const search = document.getElementById('search')?.value.toLowerCase() || '';
         const ratingFilter = document.getElementById('ratingFilter')?.value || '';
         
-        // Filter the restaurants based on these criteria
+        // Filter the restaurants based on the rating criteria
         this.filteredRestaurants = this.restaurants.filter(r => {
-            // Check if restaurant name contains the search text
-            const matchesSearch = r.name.toLowerCase().includes(search);
-            
             // Check if restaurant rating meets the minimum filter value
-            const matchesRating = !ratingFilter || (r.rating && r.rating >= parseFloat(ratingFilter));
+            // When ratingFilter is empty, show all restaurants regardless of rating status
+            const matchesRating = !ratingFilter || 
+                (r.rating !== undefined && r.rating >= parseFloat(ratingFilter));
             
-            // Restaurant must match both criteria to be included
-            return matchesSearch && matchesRating;
+            // Return true if the restaurant matches the rating criteria
+            return matchesRating;
         });
         
         // Update the display with the filtered list
@@ -390,8 +473,8 @@ class RestaurantManager {
     }
 
     /**
-     * Handler for search and filter changes
-     * This is called when the user types in the search box or changes the rating filter
+     * Handler for filter changes
+     * This is called when the user changes the rating filter
      */
     filterRestaurants() {
         this.applyFilters();
@@ -408,19 +491,21 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
         // 1. Create and initialize the map
         const restaurantMap = new RestaurantMap();
-        if (!restaurantMap.initialize()) {
+        const mapInitialized = restaurantMap.initialize();
+        if (!mapInitialized) {
             throw new Error('Failed to initialize map');
         }
-
-        // 2. Create the restaurant manager and load restaurant data
+        
+        // 2. Create and initialize the restaurant manager
         const restaurantManager = new RestaurantManager(restaurantMap);
         await restaurantManager.loadRestaurants();
-
-        // 3. Set up the sidebar structure and controls
-        setupSidebar(restaurantMap, restaurantManager);
         
-        // 4. Add rating legend to the sidebar
-        addRatingLegend();
+        // 3. Set up the event listeners for sidebar controls
+        setupEventListeners(restaurantMap, restaurantManager);
+        
+        // 4. Initialize the rating legend
+        initializeRatingLegend();
+        
     } catch (error) {
         // If anything goes wrong during initialization, log the error
         console.error('Error during initialization:', error);
@@ -437,6 +522,9 @@ function setupSidebar(restaurantMap, restaurantManager) {
     // Clear the sidebar first
     sidebarElement.innerHTML = '';
     
+    // Use a document fragment for more efficient DOM operations
+    const fragment = document.createDocumentFragment();
+    
     // Add header section
     const header = document.createElement('div');
     header.className = 'sidebar-header';
@@ -444,33 +532,32 @@ function setupSidebar(restaurantMap, restaurantManager) {
     const title = document.createElement('h2');
     title.textContent = 'Restaurant Explorer';
     header.appendChild(title);
+    fragment.appendChild(header);
     
     // Add "Show All Restaurants" button
     const centerButton = document.createElement('button');
     centerButton.textContent = 'Show All Restaurants';
     centerButton.className = 'center-button';
     centerButton.onclick = () => {
+        // Reset filters
+        const ratingFilter = document.getElementById('ratingFilter');
+        
+        if (ratingFilter) ratingFilter.value = '';
+        
+        // Apply filters to show all restaurants
+        restaurantManager.applyFilters();
+        
+        // Center the map on all markers
         if (restaurantMap.markers.length > 0) {
             const bounds = L.latLngBounds(restaurantMap.markers.map(m => m.getLatLng()));
             restaurantMap.fitBounds(bounds);
         }
     };
+    fragment.appendChild(centerButton);
     
     // Create controls container
     const controlsContainer = document.createElement('div');
     controlsContainer.className = 'controls-container';
-    
-    // Add search label and input
-    const searchLabel = document.createElement('label');
-    searchLabel.className = 'control-label';
-    searchLabel.textContent = 'Search restaurants:';
-    searchLabel.setAttribute('for', 'search');
-    
-    const searchInput = document.createElement('input');
-    searchInput.type = 'text';
-    searchInput.id = 'search';
-    searchInput.placeholder = 'Enter restaurant name...';
-    searchInput.addEventListener('input', () => restaurantManager.filterRestaurants());
     
     // Add rating filter label and select
     const ratingLabel = document.createElement('label');
@@ -491,48 +578,88 @@ function setupSidebar(restaurantMap, restaurantManager) {
         { value: '5', text: '5+: Average' }
     ];
     
+    // Create a document fragment for options
+    const optionsFragment = document.createDocumentFragment();
     options.forEach(option => {
         const optionEl = document.createElement('option');
         optionEl.value = option.value;
         optionEl.textContent = option.text;
-        ratingFilter.appendChild(optionEl);
+        optionsFragment.appendChild(optionEl);
     });
+    ratingFilter.appendChild(optionsFragment);
     
     ratingFilter.addEventListener('change', () => restaurantManager.filterRestaurants());
+    
+    // Assemble the controls container
+    controlsContainer.appendChild(ratingLabel);
+    controlsContainer.appendChild(ratingFilter);
+    fragment.appendChild(controlsContainer);
     
     // Add restaurant list container
     const restaurantList = document.createElement('div');
     restaurantList.id = 'restaurantList';
+    fragment.appendChild(restaurantList);
     
-    // Assemble the sidebar
-    controlsContainer.appendChild(searchLabel);
-    controlsContainer.appendChild(searchInput);
-    controlsContainer.appendChild(ratingLabel);
-    controlsContainer.appendChild(ratingFilter);
+    // Append the fragment to the sidebar (a single DOM operation)
+    sidebarElement.appendChild(fragment);
     
-    sidebarElement.appendChild(header);
-    sidebarElement.appendChild(centerButton);
-    sidebarElement.appendChild(controlsContainer);
-    sidebarElement.appendChild(restaurantList);
+    // Ensure correct initial display by forcing filter application after sidebar is set up
+    setTimeout(() => restaurantManager.applyFilters(), 0);
 }
 
 /**
- * Add a rating legend to the sidebar explaining what each rating number means
- * This helps users understand the rating system used for restaurants
+ * Set up event listeners for the sidebar controls
  */
-function addRatingLegend() {
-    const sidebarElement = document.getElementById('sidebar');
-    if (!sidebarElement) return;
+function setupEventListeners(restaurantMap, restaurantManager) {
+    // Set up the event listener for the "Show All Restaurants" button
+    const showAllButton = document.getElementById('showAllButton');
+    if (showAllButton) {
+        showAllButton.onclick = () => {
+            // Reset filters
+            const ratingFilter = document.getElementById('ratingFilter');
+            
+            if (ratingFilter) ratingFilter.value = '';
+            
+            // Apply filters to show all restaurants
+            restaurantManager.applyFilters();
+            
+            // Center the map on all markers
+            if (restaurantMap.markers.length > 0) {
+                const bounds = L.latLngBounds(restaurantMap.markers.map(m => m.getLatLng()));
+                restaurantMap.fitBounds(bounds);
+            }
+        };
+    }
+    
+    // Set up the event listener for the rating filter
+    const ratingFilter = document.getElementById('ratingFilter');
+    if (ratingFilter) {
+        ratingFilter.addEventListener('change', () => restaurantManager.filterRestaurants());
+    }
+}
 
-    // Create legend container
-    const legendContainer = document.createElement('div');
-    legendContainer.className = 'rating-legend';
-
-    // Add legend title
-    const legendTitle = document.createElement('h3');
-    legendTitle.textContent = 'Rating Legend';
-    legendContainer.appendChild(legendTitle);
-
+/**
+ * Initialize the rating legend by populating legend items
+ */
+function initializeRatingLegend() {
+    // Add the event listener for the legend toggle
+    const legendToggle = document.querySelector('.legend-toggle');
+    const legendContent = document.querySelector('.legend-content');
+    
+    if (legendToggle && legendContent) {
+        legendToggle.addEventListener('click', () => {
+            legendContent.classList.toggle('collapsed');
+            // Update the toggle icon
+            const toggleIcon = legendToggle.querySelector('.toggle-icon');
+            if (toggleIcon) {
+                toggleIcon.textContent = legendContent.classList.contains('collapsed') ? '▼' : '▲';
+            }
+        });
+    }
+    
+    // Add legend items to the legend content
+    if (!legendContent) return;
+    
     // Define the legend items
     const legendItems = [
         { rating: 10, emoji: '🚀', description: "Chef's kiss. Absolute must." },
@@ -546,30 +673,28 @@ function addRatingLegend() {
         { rating: 2, emoji: '🤢', description: "Big yikes. Regret is real." },
         { rating: 1, emoji: '🚨', description: "Trash. My taste buds are crying." }
     ];
-
-    // Create legend items
+    
+    // Use document fragment for more efficient DOM operations
+    const fragment = document.createDocumentFragment();
+    
+    // Create legend items by cloning the template
     legendItems.forEach(item => {
-        const legendItem = document.createElement('div');
-        legendItem.className = 'legend-item';
-
-        const ratingSpan = document.createElement('span');
-        ratingSpan.className = 'legend-rating';
+        const template = document.getElementById('legendItemTemplate');
+        const legendItem = template.content.cloneNode(true);
+        
+        // Get references to the elements we need to modify
+        const ratingSpan = legendItem.querySelector('.legend-rating');
+        const emojiSpan = legendItem.querySelector('.legend-emoji');
+        const descSpan = legendItem.querySelector('.legend-description');
+        
+        // Set content
         ratingSpan.textContent = item.rating;
-
-        const emojiSpan = document.createElement('span');
-        emojiSpan.className = 'legend-emoji';
         emojiSpan.textContent = item.emoji;
-
-        const descSpan = document.createElement('span');
-        descSpan.className = 'legend-description';
         descSpan.textContent = item.description;
-
-        legendItem.appendChild(ratingSpan);
-        legendItem.appendChild(emojiSpan);
-        legendItem.appendChild(descSpan);
-        legendContainer.appendChild(legendItem);
+        
+        fragment.appendChild(legendItem);
     });
-
-    // Add the legend to the sidebar
-    sidebarElement.appendChild(legendContainer);
+    
+    // Append all items at once
+    legendContent.appendChild(fragment);
 }

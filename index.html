@@ -8,6 +8,56 @@
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+    <header id="site-header">
+        <div class="header-content">
+            <!-- Header content is displayed as a background image -->
+        </div>
+        <!-- Corner squares and borders will be positioned absolutely -->
+        <div class="bottom-left-square"></div>
+        <div class="bottom-right-square"></div>
+        <div class="top-border"></div>
+        <div class="right-border"></div>
+        <div class="bottom-border"></div>
+        <div class="left-border"></div>
+    </header>
+    
+    <div class="content-wrapper">
+        <div id="sidebar">
+            <div class="sidebar-header">
+                <h2>Restaurant Explorer</h2>
+            </div>
+            
+            <button class="center-button" id="showAllButton">Show All Restaurants</button>
+            
+            <div class="controls-container">
+                <label class="control-label" for="ratingFilter">Filter by minimum rating:</label>
+                <select id="ratingFilter">
+                    <option value="">Show all</option>
+                    <option value="9">9+: Elite</option>
+                    <option value="8">8+: Excellent</option>
+                    <option value="7">7+: Very Good</option>
+                    <option value="6">6+: Good</option>
+                    <option value="5">5+: Average</option>
+                </select>
+            </div>
+            
+            <div id="restaurantList">
+                <!-- Restaurant list will be populated by JavaScript -->
+            </div>
+            
+            <div class="rating-legend">
+                <div class="legend-toggle">
+                    <h3>Rating Legend</h3>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="legend-content collapsed">
+                    <!-- Legend items will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+        <div id="restaurantMap"></div>
+    </div>
+    
     <div id="banner">
         <div class="banner-content">
             <div class="logo">
@@ -18,34 +68,31 @@
             </div>
         </div>
     </div>
-    
-    <div class="content-wrapper">
-        <div id="sidebar">
-            <h2>Flavour Crusaders</h2>
-            
-            <input type="text" id="search" placeholder="Search...">
-            <select id="ratingFilter">
-                <option value="">All Ratings</option>
-                <option value="9">9+ Stars</option>
-                <option value="8">8+ Stars</option>
-                <option value="7">7+ Stars</option>
-                <option value="6">6+ Stars</option>
-                <option value="5">5+ Stars</option>
-                <option value="4">4+ Stars</option>
-                <option value="3">3+ Stars</option>
-                <option value="2">2+ Stars</option>
-                <option value="1">1+ Stars</option>
-            </select>
-            <div id="restaurantList"></div>
+
+    <!-- HTML Template for pennant marker -->
+    <template id="pennantTemplate">
+        <div class="pennant-container">
+            <div class="pennant-mount"></div>
+            <div class="pennant-flag"></div>
         </div>
-        <div id="restaurantMap"></div>
-    </div>
+    </template>
     
-    <footer id="site-footer">
-        <div class="footer-content">
-            <!-- Footer content is displayed as a background image -->
+    <!-- HTML Template for restaurant item -->
+    <template id="restaurantItemTemplate">
+        <div class="restaurant">
+            <span class="restaurant-name"></span>
+            <span class="restaurant-rating"></span>
         </div>
-    </footer>
+    </template>
+    
+    <!-- HTML Template for legend item -->
+    <template id="legendItemTemplate">
+        <div class="legend-item">
+            <span class="legend-rating"></span>
+            <span class="legend-emoji"></span>
+            <span class="legend-description"></span>
+        </div>
+    </template>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="script.js"></script>
